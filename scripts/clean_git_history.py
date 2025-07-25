@@ -56,13 +56,13 @@ def clean_git_history():
     # Alternative: Create a new commit that removes the token
     print(f"\n🔄 Alternative: Creating a new commit to remove the token...")
     
-    # Check if the file still contains the token
+    # Check if the file still contains any hardcoded tokens
     token_file = Path("scripts/setup_token.py")
     if token_file.exists():
         try:
             content = token_file.read_text(encoding='utf-8')
-            if "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" in content:
-                print("⚠️  Token still found in file. Please run the updated setup_token.py script first.")
+            if "hf_" in content and len(content.split("hf_")[1].split()[0]) > 20:
+                print("⚠️  Hardcoded token still found in file. Please run the updated setup_token.py script first.")
                 return False
         except UnicodeDecodeError:
             print("⚠️  Could not read file due to encoding issues. Proceeding with cleanup...")
