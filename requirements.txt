@@ -6,7 +6,6 @@ tokenizers==0.20.3
 torch==2.4.0
 accelerate==0.32.1
 peft==0.13.1
-bitsandbytes==0.44.1
 
 # LangChain and related
 langchain==0.3.12
@@ -40,8 +39,8 @@ pydantic==2.10.4
 # Data version control
 dvc==3.58.0
 
-# Experiment tracking
-wandb==0.18.2
+# Experiment tracking (disabled for faster training)
+# wandb==0.18.2
 
 # Development and testing
 pytest==8.2.1
@@ -55,4 +54,9 @@ safety==2.3.5
 # Utilities
 python-dotenv==1.0.1
 tqdm==4.67.1
-click==8.1.7 
+click==8.1.7
+
+# Evaluation metrics
+nltk==3.8.1
+rouge-score==0.1.2
+bert-score==0.3.13 
