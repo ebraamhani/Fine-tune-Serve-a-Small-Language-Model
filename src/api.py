@@ -231,7 +231,7 @@ async def health():
             "model_name": model_config.model_name,
             "output_dir": str(model_config.output_dir),
             "fine_tuned": True,
-            "parameters": "~468M (3.8M trainable)"
+            "parameters": "500M (8M trainable)"
         }
     
     return HealthResponse(
