@@ -94,22 +94,30 @@ class ModelBenchmarker:
     
     def generate_response(self, model, tokenizer, question: str, max_length: int = 200) -> str:
         """Generate response from a model"""
-        # Format prompt based on model type
-        if "qwen" in self.model_name.lower():
-            messages = [
-                {"role": "system", "content": "You are a helpful AI assistant specializing in Egypt tourism information."},
-                {"role": "user", "content": question}
-            ]
-            prompt = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True
-            )
-        else:
+        # Format prompt based on model type and tokenizer capabilities
+        try:
+            if "qwen" in self.model_name.lower() and hasattr(tokenizer, 'chat_template') and tokenizer.chat_template:
+                messages = [
+                    {"role": "system", "content": "You are a helpful AI assistant specializing in Egypt tourism information."},
+                    {"role": "user", "content": question}
+                ]
+                prompt = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=True
+                )
+            else:
+                prompt = f"### Instruction:\n{question}\n\n### Response:\n"
+        except Exception:
+            # Fallback to simple format
             prompt = f"### Instruction:\n{question}\n\n### Response:\n"
         
         # Tokenize
         inputs = tokenizer(prompt, return_tensors="pt")
+        
+        # Move inputs to the same device as the model
+        device = next(model.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
         
         # Generate
         with torch.no_grad():
@@ -122,7 +130,7 @@ class ModelBenchmarker:
             )
         
         # Decode only the newly generated tokens
-        input_ids_len = inputs.input_ids.shape[1]
+        input_ids_len = inputs['input_ids'].shape[1]
         generated_ids = outputs[0, input_ids_len:]
         response = tokenizer.decode(generated_ids, skip_special_tokens=True)
         
