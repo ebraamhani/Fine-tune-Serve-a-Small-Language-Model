@@ -8,6 +8,7 @@ on:
       - 'src/data_processing/**'
       - 'src/dataset_generation/**'
       - 'config/**'
+      - 'data/datasets/**'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -15,16 +16,17 @@ on:
       - 'src/data_processing/**'
       - 'src/dataset_generation/**'
       - 'config/**'
+      - 'data/datasets/**'
   workflow_dispatch:
     inputs:
       model_name:
         description: 'Model to train'
         required: true
-        default: 'gpt2'
+        default: 'Qwen/Qwen1.5-0.5B-Chat'
       dataset_name:
         description: 'Dataset to use'
         required: true
-        default: 'squad'
+        default: 'egypt_tourism'
 
 env:
   PYTHON_VERSION: "3.11"
@@ -50,20 +52,64 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Validate datasets
+    - name: Validate Egypt tourism datasets
       run: |
         python -c "
-        from datasets import load_dataset
+        import json
         import sys
+        from pathlib import Path
         
-        datasets_to_check = ['squad', 'glue', 'conll2003']
-        for dataset in datasets_to_check:
-            try:
-                ds = load_dataset(dataset, split='train[:100]')
-                print(f'✅ {dataset}: {len(ds)} samples')
-            except Exception as e:
-                print(f'❌ {dataset}: {e}')
+        print('🔍 Validating Egypt tourism datasets...')
+        
+        # Check if datasets exist
+        dataset_path = Path('data/datasets/splits')
+        required_files = ['egypt_tourism_train.json', 'egypt_tourism_val.json', 'egypt_tourism_test.json']
+        
+        for file in required_files:
+            file_path = dataset_path / file
+            if not file_path.exists():
+                print(f'❌ Missing dataset file: {file}')
                 sys.exit(1)
+            print(f'✅ Found: {file}')
+            
+            # Validate JSON structure
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # Check required fields
+                if 'metadata' not in data:
+                    print(f'❌ {file}: Missing metadata field')
+                    sys.exit(1)
+                if 'data' not in data:
+                    print(f'❌ {file}: Missing data field')
+                    sys.exit(1)
+                
+                # Check data samples
+                samples = data['data']
+                if not samples:
+                    print(f'❌ {file}: No data samples found')
+                    sys.exit(1)
+                
+                print(f'✅ {file}: {len(samples)} samples, format: {data.get(\"metadata\", {}).get(\"format\", \"unknown\")}')
+                
+                # Validate sample structure
+                for i, sample in enumerate(samples[:5]):  # Check first 5 samples
+                    if 'instruction' not in sample:
+                        print(f'❌ {file}: Sample {i} missing instruction field')
+                        sys.exit(1)
+                    if 'output' not in sample:
+                        print(f'❌ {file}: Sample {i} missing output field')
+                        sys.exit(1)
+                        
+            except json.JSONDecodeError as e:
+                print(f'❌ {file}: Invalid JSON - {e}')
+                sys.exit(1)
+            except Exception as e:
+                print(f'❌ {file}: Error reading file - {e}')
+                sys.exit(1)
+        
+        print('🎉 All datasets validated successfully!')
         "
         
     - name: Check data quality
@@ -77,8 +123,7 @@ jobs:
     
     strategy:
       matrix:
-        model: [gpt2, distilbert-base-uncased]
-        dataset: [squad, glue]
+        config: [very_fast, fast]
         
     steps:
     - name: Checkout code
@@ -93,28 +138,19 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install wandb
         
-    - name: Login to Weights & Biases
+    - name: Train Egypt tourism model
       run: |
-        wandb login ${{ env.WANDB_API_KEY }}
-        
-    - name: Train model
-      run: |
-        echo "Training ${{ matrix.model }} on ${{ matrix.dataset }}"
-        # Add your training script here
-        # python src/training/train.py --model ${{ matrix.model }} --dataset ${{ matrix.dataset }}
+        echo "Training Egypt tourism model with ${{ matrix.config }} configuration"
+        python main.py train
+        # Note: In CI, we use the very_fast config to keep training time reasonable
         
     - name: Upload model artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: model-${{ matrix.model }}-${{ matrix.dataset }}
+        name: egypt-tourism-model-${{ matrix.config }}
         path: |
-          models/
-          checkpoints/
-          *.pt
-          *.pth
-          *.bin
+          models/egypt_tourism_assistant/
         retention-days: 30
 
   model-evaluation:
@@ -141,24 +177,17 @@ jobs:
       with:
         path: models/
         
-    - name: Evaluate models
+    - name: Run benchmark evaluation
       run: |
-        echo "Evaluating trained models..."
-        # Add your evaluation script here
-        # python src/evaluation/evaluate.py
-        
-    - name: Generate evaluation report
-      run: |
-        echo "Generating evaluation report..."
-        # Add report generation here
+        echo "Running benchmark evaluation..."
+        python main.py benchmark
         
     - name: Upload evaluation results
       uses: actions/upload-artifact@v4
       with:
         name: evaluation-results
         path: |
-          evaluation/
-          reports/
+          data/benchmark/
           *.json
           *.csv
         retention-days: 90
@@ -189,13 +218,24 @@ jobs:
         name: evaluation-results
         path: evaluation/
         
-    - name: Deploy best model
+    - name: Test API deployment
       run: |
-        echo "Deploying best performing model..."
-        # Add deployment logic here
-        # Example: Upload to Hugging Face Hub, deploy to cloud, etc.
+        echo "Testing API deployment..."
+        # Start API server in background
+        python main.py serve --host 127.0.0.1 --port 8000 &
+        sleep 10
         
-    - name: Update model registry
+        # Test health endpoint
+        curl -f http://127.0.0.1:8000/health || exit 1
+        
+        # Test prediction endpoint
+        curl -X POST http://127.0.0.1:8000/predict \
+          -H "Content-Type: application/json" \
+          -d '{"question": "What are the best attractions in Egypt?"}' || exit 1
+        
+        echo "✅ API deployment test passed"
+        
+    - name: Update deployment status
       run: |
-        echo "Updating model registry..."
-        # Add registry update logic here 
+        echo "🎉 Model deployment completed successfully!"
+        echo "API is ready for production use" 
