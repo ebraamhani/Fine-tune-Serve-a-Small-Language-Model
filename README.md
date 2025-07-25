@@ -101,7 +101,7 @@ pip install -r requirements.txt
 You can immediately start the API server to use the pre-trained model included in the project. This allows you to test the application without needing to train the model yourself.
 
 ```bash
-python scripts/run_api_server.py
+python main.py serve
 ```
 
 #### **Step 4: Test the API**
@@ -109,9 +109,9 @@ python scripts/run_api_server.py
 Once the server is running, you can interact with your AI assistant in several ways:
 
 1.  **Interactive Docs**: Open a web browser and go to **http://127.0.0.1:8000/docs**. This interface lets you test all API endpoints directly.
-2.  **Automated Script**: Run the included test script to verify all endpoints are working correctly.
+2.  **Run the Benchmark**: Use the built-in benchmark command to evaluate the model's performance.
     ```bash
-    python scripts/test_api.py
+    python main.py benchmark
     ```
 
 #### **Step 5: (Optional) Re-train the Model**
@@ -119,8 +119,7 @@ Once the server is running, you can interact with your AI assistant in several w
 If you want to fine-tune the model yourself with new data or different settings, you can run the full training pipeline:
 
 ```bash
-# This will run the "very_fast" configuration by default
-python scripts/run_training.py
+python main.py train
 ```
 
 This will overwrite the existing model in the `models/` directory with your newly trained version.
@@ -160,7 +159,7 @@ python scripts/setup_token.py
 Want to see the assistant in action immediately? Start the API server:
 
 ```bash
-python scripts/run_api_server.py
+python main.py serve
 ```
 
 Then visit:
@@ -211,7 +210,7 @@ Now we fine-tune our language model on the Egypt tourism data:
 
 ```bash
 # Start the fine-tuning process
-python scripts/run_training.py
+python main.py train
 
 # Check training setup beforehand (optional)
 python scripts/check_training_setup.py
@@ -232,7 +231,7 @@ Let's see how much our fine-tuning improved the model:
 python scripts/create_benchmark_dataset.py
 
 # Run comprehensive evaluation
-python scripts/run_benchmark.py
+python main.py benchmark
 ```
 
 **What happens here:**
@@ -247,7 +246,7 @@ Finally, we deploy our assistant as a production-ready API:
 
 ```bash
 # Start the API server
-python scripts/run_api_server.py
+python main.py serve
 
 # Test all endpoints
 python scripts/test_api.py
@@ -263,7 +262,7 @@ python scripts/test_api.py
 
 ### Interactive Testing
 
-1. **Start the server**: `python scripts/run_api_server.py`
+1. **Start the server**: `python main.py serve`
 2. **Open the docs**: Visit http://127.0.0.1:8000/docs
 3. **Try the `/predict` endpoint** with questions like:
    - "What currency is used in Egypt?"

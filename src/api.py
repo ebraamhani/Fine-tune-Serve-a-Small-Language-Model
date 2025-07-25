@@ -13,15 +13,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 
 import torch
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-import uvicorn
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add project root to sys.path
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from src.training.qlora_trainer import QLoRATrainer
@@ -277,19 +280,4 @@ async def get_examples():
             "Can I drink tap water in Egypt?",
             "What languages are spoken in Egypt?"
         ]
-    }
-
-if __name__ == "__main__":
-    # Configuration
-    host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 8000))
-    
-    logger.info(f"🚀 Starting server on {host}:{port}")
-    
-    uvicorn.run(
-        "api_server:app",
-        host=host,
-        port=port,
-        reload=False,  # Set to True for development
-        log_level="info"
-    ) 
+    } 

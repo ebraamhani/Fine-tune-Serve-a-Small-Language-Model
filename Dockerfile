@@ -34,4 +34,4 @@ ENV PORT=8000
 ENV PYTHONPATH=/app
 
 # Start the API server
-CMD ["python", "scripts/run_api_server.py"] 
+CMD ["python", "main.py", "serve", "--host", "0.0.0.0"] 

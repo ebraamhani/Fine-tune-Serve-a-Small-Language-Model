@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from dotenv import load_dotenv
 import torch
 from transformers import (
     AutoModelForCausalLM,
@@ -23,6 +24,9 @@ from peft import (
     TaskType
 )
 from datasets import Dataset
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
