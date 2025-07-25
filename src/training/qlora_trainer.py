@@ -340,6 +340,10 @@ class QLoRATrainer:
         # Tokenize
         inputs = self.tokenizer(prompt, return_tensors="pt")
         
+        # Move inputs to the same device as the model
+        device = next(self.model.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        
         # Generate
         with torch.no_grad():
             outputs = self.model.generate(
@@ -351,7 +355,7 @@ class QLoRATrainer:
             )
         
         # Decode only the newly generated tokens, skipping the prompt
-        input_ids_len = inputs.input_ids.shape[1]
+        input_ids_len = inputs['input_ids'].shape[1]
         generated_ids = outputs[0, input_ids_len:]
         response = self.tokenizer.decode(generated_ids, skip_special_tokens=True)
 
