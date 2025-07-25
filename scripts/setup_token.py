@@ -13,9 +13,15 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 def setup_token():
     """Set up the Hugging Face token"""
-    token = "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"
-    
     print("🤗 Setting up Hugging Face token...")
+    
+    # Get token from user input
+    token = input("Please enter your Hugging Face token: ").strip()
+    
+    if not token:
+        print("❌ No token provided")
+        return False
+    
     print(f"Token: {token[:8]}...")
     
     # Set environment variables
