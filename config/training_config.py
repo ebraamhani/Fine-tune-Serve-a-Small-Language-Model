@@ -11,7 +11,7 @@ class TrainingConfig:
     """Training configuration"""
     
     # Model settings
-    model_name: str = "Qwen/Qwen2.5-7B-Instruct-1M"  # Open source alternative
+    model_name: str = "Qwen/Qwen2.5-7B-Instruct"  # Larger, more capable model
     dataset_path: str = "data/datasets/splits"
     output_dir: str = "models/egypt_tourism_assistant"
     wandb_project: str = "egypt-tourism-assistant"
@@ -97,6 +97,34 @@ CONFIGS = {
         eval_steps=200, # Set high to avoid frequent evaluation
         save_steps=400, # Set high to avoid frequent saving
         logging_steps=5
+    ),
+    
+    "production": TrainingConfig(
+        model_name="Qwen/Qwen2.5-7B-Instruct",
+        num_epochs=5,
+        batch_size=2,
+        gradient_accumulation_steps=8,
+        learning_rate=1e-4,
+        lora_r=32,
+        lora_alpha=64,
+        eval_steps=50,
+        save_steps=100,
+        warmup_steps=300,
+        max_length=4096
+    ),
+    
+    "high_quality": TrainingConfig(
+        model_name="Qwen/Qwen2.5-14B-Instruct",
+        num_epochs=3,
+        batch_size=1,
+        gradient_accumulation_steps=16,
+        learning_rate=5e-5,
+        lora_r=64,
+        lora_alpha=128,
+        eval_steps=25,
+        save_steps=50,
+        warmup_steps=500,
+        max_length=4096
     )
 }
 
